@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -10,15 +10,11 @@ let package = Package(
         .library(
             name: "SwiftSMTP",
             targets: ["SwiftSMTP"]),
-//        .library(
-//            name: "SwiftSMTPVapor",
-//            targets: ["SwiftSMTPVapor"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.16.1"),
-        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.7.1"),
-        //.package(url: "https://github.com/vapor/service.git", from: "1.0.2"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.25.1"),
+        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.10.1"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -30,9 +26,6 @@ let package = Package(
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
             ]),
-//        .target(
-//            name: "SwiftSMTPVapor",
-//            dependencies: ["SwiftSMTP", "Service"]),
         .target(
             name: "SwiftSMTPCLI",
             dependencies: [
@@ -42,8 +35,5 @@ let package = Package(
         .testTarget(
             name: "SwiftSMTPTests",
             dependencies: ["SwiftSMTP"]),
-//        .testTarget(
-//            name: "SwiftSMTPVaporTests",
-//            dependencies: ["SwiftSMTPVapor"]),
     ]
 )
