@@ -4,5 +4,7 @@ import XCTest
 final class SwiftSMTPTests: XCTestCase {
     func testExample() {
         // TODO
+        
     }
+    
 }

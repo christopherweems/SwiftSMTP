@@ -1,3 +1,6 @@
+// NetworkModels.swift
+//
+
 enum SMTPRequest {
     case sayHello(serverName: String)
     case startTLS
@@ -9,6 +12,7 @@ enum SMTPRequest {
     case data
     case transferData(Email)
     case quit
+    
 }
 
 enum SMTPResponse {
@@ -17,8 +21,12 @@ enum SMTPResponse {
 
     func validate() throws {
         switch self {
-        case .ok(_, _): break
-        case .error(let message): throw ServerError(serverMessage: message)
+        case .ok(_, _):
+            break
+            
+        case .error(let message):
+            throw ServerError(serverMessage: message)
         }
     }
+    
 }

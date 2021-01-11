@@ -1,3 +1,6 @@
+// SMTPRequestEncoder.swift
+//
+
 import Foundation
 import NIO
 
@@ -7,17 +10,19 @@ fileprivate extension DateFormatter {
         formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
         return formatter
     }()
+    
 }
 
 final class SMTPRequestEncoder: MessageToByteEncoder, ChannelOutboundHandler {
     typealias OutboundIn = SMTPRequest
 
     private func createMultipartBoundary() -> String {
-        return String(UUID().uuidString.filter { $0.isHexDigit })
+        String(UUID().uuidString.filter { $0.isHexDigit })
     }
 
     private func encode(attachments: [Email.Attachment], with boundary: String) -> String {
         assert(!attachments.isEmpty)
+        
         return attachments.lazy.map {
             """
             Content-Type: \($0.contentType)\r\n\
@@ -32,40 +37,54 @@ final class SMTPRequestEncoder: MessageToByteEncoder, ChannelOutboundHandler {
         switch data {
         case .sayHello(serverName: let server):
             out.writeString("HELO \(server)")
+            
         case .startTLS:
             out.writeString("STARTTLS")
+            
         case .beginAuthentication:
             out.writeString("AUTH LOGIN")
+            
         case .authUser(let user):
             out.writeBytes(Data(user.utf8).base64EncodedData())
+            
         case .authPassword(let password):
             out.writeBytes(Data(password.utf8).base64EncodedData())
+            
         case .mailFrom(let from):
             out.writeString("MAIL FROM:<\(from)>")
+            
         case .recipient(let rcpt):
             out.writeString("RCPT TO:<\(rcpt)>")
+            
         case .data:
             out.writeString("DATA")
+            
         case .transferData(let email):
             let date = Date()
+            
             out.writeString("From: \(email.sender.asMIME)\r\n")
             out.writeString("To: \(email.recipients.map { $0.asMIME }.joined(separator: ", "))\r\n")
+            
             if let replyTo = email.replyTo {
-            out.writeString("Reply-to: \(replyTo.asMIME)\r\n")
+                out.writeString("Reply-to: \(replyTo.asMIME)\r\n")
             }
+            
             if !email.cc.isEmpty {
-            out.writeString("Cc: \(email.cc.map { $0.asMIME }.joined(separator: ", "))\r\n")
+                out.writeString("Cc: \(email.cc.map { $0.asMIME }.joined(separator: ", "))\r\n")
             }
+            
             out.writeString("Date: \(DateFormatter.smtp.string(from: date))\r\n")
             out.writeString("Message-ID: <\(date.timeIntervalSince1970)\(email.sender.emailAddress.drop { $0 != "@" })>\r\n")
             out.writeString("Subject: \(email.subject)\r\n")
 
             let contentType: String
             let bodyAndAttachments: String
+            
             switch (email.body, email.attachments.isEmpty) {
             case (.plain(let plain), true):
                 contentType = #"text/plain; charset="UTF-8""#
                 bodyAndAttachments = plain + "\r\n"
+                
             case (.plain(let plain), false):
                 let boundary = createMultipartBoundary()
                 contentType = #"multipart/mixed; boundary=\#(boundary)"#
@@ -77,9 +96,11 @@ final class SMTPRequestEncoder: MessageToByteEncoder, ChannelOutboundHandler {
                 \(encode(attachments: email.attachments, with: boundary))\r\n\
                 --\(boundary)--\r\n
                 """
+                
             case (.html(let html), true):
                 contentType = #"text/html; charset="UTF-8""#
                 bodyAndAttachments = html + "\r\n"
+                
             case (.html(let html), false):
                 let boundary = createMultipartBoundary()
                 contentType = #"multipart/mixed; boundary=\#(boundary)"#
@@ -91,6 +112,7 @@ final class SMTPRequestEncoder: MessageToByteEncoder, ChannelOutboundHandler {
                 \(encode(attachments: email.attachments, with: boundary))\r\n\
                 --\(boundary)--\r\n
                 """
+                
             case (.universal(let plain, let html), true):
                 let boundary = createMultipartBoundary()
                 contentType = #"multipart/alternative; boundary=\#(boundary)"#
@@ -103,6 +125,7 @@ final class SMTPRequestEncoder: MessageToByteEncoder, ChannelOutboundHandler {
                 \(html)\r\n\r\n\
                 --\(boundary)--\r\n
                 """
+                
             case (.universal(let plain, let html), false):
                 let mainBoundary = createMultipartBoundary()
                 let attachmentsBoundary = createMultipartBoundary()
@@ -121,14 +144,21 @@ final class SMTPRequestEncoder: MessageToByteEncoder, ChannelOutboundHandler {
                 --\(attachmentsBoundary)--\r\n\r\n\
                 --\(mainBoundary)--\r\n
                 """
+                
             }
+            
             out.writeString("Content-type: \(contentType)\r\n")
             out.writeString("MIME-Version: 1.0\r\n\r\n")
             out.writeString(bodyAndAttachments)
             out.writeString("\r\n.")
+            
         case .quit:
             out.writeString("QUIT")
+            
         }
-            out.writeString("\r\n")
+        
+        out.writeString("\r\n")
+        
     }
+    
 }
